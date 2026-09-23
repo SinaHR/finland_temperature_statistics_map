@@ -99,7 +99,7 @@ Requirements: Python ≥ 3.10, ~15 GB free disk, network access. The pipeline is
 single sequence of idempotent, restartable scripts — re-running skips completed work.
 
 ```bash
-git clone <this-repo> finland_climate_map && cd finland_climate_map
+git clone <this-repo> finland_temperature_statistics_map && cd finland_temperature_statistics_map
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 .venv/bin/python scripts/download_climgrid.py           # ~2.2 GB raw NetCDF from FMI
