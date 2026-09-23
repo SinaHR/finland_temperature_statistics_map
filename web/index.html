@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Finland Temperature Frequencies — Observed Change Between Reference Climates</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <h1>Observed Temperature Frequencies in Finland</h1>
+  <p class="subtitle">How often a chosen daily temperature was observed around a calendar
+  date, in a chosen 30-year period versus the 1971–2000 baseline. This dashboard presents empirical frequencies
+  from gridded observations only, no models, and no projections involved.
+  <a href="#methods">Methods &amp; data</a></p>
+</header>
+
+<div class="controls" id="controls">
+  <label class="ctl">
+    <span>Variable</span>
+    <select id="ctl-variable">
+      <option value="tmax">Daily max</option>
+      <option value="tday" selected>Daily mean</option>
+      <option value="tmin">Daily min</option>
+    </select>
+  </label>
+  <label class="ctl">
+    <span>Date (±15-day window)</span>
+    <span class="date-pair">
+      <select id="ctl-day"></select>
+      <select id="ctl-month"></select>
+    </span>
+  </label>
+  <label class="ctl">
+    <span>Threshold °C</span>
+    <input type="number" id="ctl-threshold" step="0.5" min="-45" max="39.5" value="20">
+  </label>
+  <div class="ctl">
+    <span>Direction <em id="dir-auto-note" title="Chosen automatically from the baseline median; click to override">auto</em></span>
+    <div class="seg" id="ctl-direction" role="radiogroup" aria-label="Direction">
+      <button type="button" data-dir="atleast" aria-pressed="true">at least</button>
+      <button type="button" data-dir="atmost" aria-pressed="false">at most</button>
+    </div>
+  </div>
+  <label class="ctl ctl-year">
+    <span>Reference period <strong id="year-label"></strong></span>
+    <input type="range" id="ctl-refyear" min="2000" max="2025" step="1" value="2025">
+  </label>
+  <label class="ctl">
+    <span>Map layer</span>
+    <select id="ctl-layer">
+      <option value="ratio" selected>Frequency ratio vs baseline</option>
+      <option value="prob">Observed frequency</option>
+      <option value="clim">Threshold minus baseline median</option>
+    </select>
+  </label>
+</div>
+
+<main class="layout">
+  <section class="card map-card">
+    <div class="card-head">
+      <h2 id="map-title"></h2>
+      <p class="hint" id="map-subtitle"></p>
+    </div>
+    <div class="map-wrap">
+      <canvas id="map" width="340" height="580" aria-label="Map of Finland grid cells; click a cell to inspect it"></canvas>
+      <div class="tooltip" id="map-tooltip" hidden></div>
+    </div>
+    <div class="legend" id="map-legend"></div>
+    <p class="note" id="map-note" hidden></p>
+  </section>
+
+  <section class="card detail-card" id="detail-card">
+    <div class="card-head">
+      <h2 id="detail-title">Pick a cell on the map</h2>
+      <p class="hint" id="detail-subtitle">Click any grid cell to compare its two
+      observed temperature distributions.</p>
+    </div>
+    <div id="detail-body" hidden>
+      <div class="stats-row" id="stats-row"></div>
+      <div class="chart-wrap">
+        <svg id="detail-chart" role="img" aria-label="Overlaid observed temperature distributions for the two 30-year windows"></svg>
+        <div class="tooltip" id="chart-tooltip" hidden></div>
+      </div>
+      <div class="chart-legend" id="chart-legend"></div>
+      <p class="note" id="detail-note" hidden></p>
+      <p class="fineprint" id="detail-fineprint"></p>
+    </div>
+  </section>
+</main>
+
+<details class="methods" id="methods">
+  <summary>Methods, data &amp; caveats</summary>
+  <div class="methods-body">
+    <h3>What this tool shows</h3>
+    <p>Empirical frequencies of daily temperatures in observational data, and how those
+    frequencies differ between two 30-year reference climates. It is strictly
+    descriptive: it reports what was observed, not why.
+    <strong>For attribution and causation questions, see
+    <a href="https://www.ipcc.ch/report/ar6/wg1/chapter/chapter-3/" rel="external">IPCC AR6 WG1 chapter 3</a>
+    and <a href="https://www.worldweatherattribution.org/" rel="external">World Weather Attribution</a>.</strong></p>
+
+    <h3>Data</h3>
+    <p id="methods-provenance">FMI ClimGrid daily gridded observational dataset for
+    Finland (~10 km grid, EPSG:3067), 1961–2025, daily mean/maximum/minimum temperature.
+    © Finnish Meteorological Institute, CC BY 4.0, retrieved via the Paituli service
+    (CSC). Reference: Aalto et al. (2016), doi:10.1002/2015JD024651. Exact file
+    checksums are pinned in the processing repository.</p>
+
+    <h3>Windows and estimation</h3>
+    <ul>
+      <li>A query pools all days within <strong>±15 days</strong> of the chosen calendar
+      date (a 31-day window) across the <strong>30 years ending in the chosen reference
+      year</strong>, inclusive: reference year R covers R−29…R. The baseline is fixed at
+      R = 2000, i.e. <strong>1971–2000</strong>. Windows wrap across the year boundary
+      (early-January windows include late-December days of the preceding years).
+      Feb 29 is dropped. Sample size ≈ 31 × 30 = 930 daily values per estimate; for
+      R = 2025, windows near the end of December contain slightly fewer (≥ 915)
+      because January 2026 does not exist yet.</li>
+      <li>Daily values are pooled into fixed <strong>0.5 °C bins</strong> spanning
+      −45…+40 °C; the handful of Lapland minimum temperatures below −45 °C count in the
+      lowest bin. Thresholds snap to 0.5 °C. “At least X” is the observed share of days
+      with T ≥ X; “at most X” the share with T &lt; X + 0.5 °C (bin resolution).</li>
+      <li>Dates snap to the nearest of 52 precomputed weekly window centers (at most
+      4 days away; the ±15-day pooling makes neighboring windows nearly identical).</li>
+      <li>The <strong>frequency ratio</strong> divides the chosen window’s observed
+      share by the baseline share. Both absolute shares are always displayed with it:
+      a ratio alone can mislead when both shares are tiny.</li>
+      <li>If a window contains <strong>no days</strong> at/beyond the threshold, the
+      tool reports “not observed (fewer than ~1 in 930 days)” and shows no ratio —
+      nothing is extrapolated or smoothed.</li>
+    </ul>
+
+    <h3>Caveats</h3>
+    <ul>
+      <li>Consecutive days are strongly autocorrelated, so the ~930 pooled values
+      contain far fewer independent samples. Point estimates are unbiased, but no
+      uncertainty bands are shown, naïve intervals would be misleadingly narrow.</li>
+      <li>The 31-day window blends the seasonal trend within the window.</li>
+      <li>Colloquially, “chance of a 30 °C day” refers to the <em>daily maximum</em>
+      variable.</li>
+      <li>The two 30-year windows overlap for reference years before 2030; differences
+      between overlapping windows understate differences between disjoint periods.</li>
+    </ul>
+  </div>
+</details>
+
+<footer class="site-footer">
+  <p>Data © Finnish Meteorological Institute (CC BY 4.0) · Observed frequencies only —
+  this tool makes no causal claims.</p>
+</footer>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
